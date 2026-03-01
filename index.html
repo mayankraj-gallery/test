@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Private Gallery</title>
+
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "vovn59tmej");
+    </script>
+
+    <style>
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Initial Instruction Popup */
+        #popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: flex; justify-content: center; align-items: center; text-align: center; }
+        .popup-content { padding: 30px; border: 1px solid #444; background: #111; border-radius: 15px; max-width: 85%; }
+        .btn-start { margin-top: 20px; padding: 12px 25px; background: #fff; color: #000; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+
+        /* Photo Viewer */
+        #viewer { flex-grow: 1; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; touch-action: none; }
+        img { max-width: 100%; max-height: 100%; transition: transform 0.3s ease-out; transform-origin: center; cursor: zoom-in; }
+        
+        /* Navigation Controls */
+        .controls { position: absolute; bottom: 40px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; box-sizing: border-box; pointer-events: none; }
+        .nav-btn { pointer-events: auto; padding: 12px 20px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; border-radius: 8px; cursor: pointer; backdrop-filter: blur(10px); font-size: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="popup">
+        <div class="popup-content">
+            <h2 style="margin-top:0;">Gallery Instructions</h2>
+            <p style="line-height:1.5;">• <b>Tap</b> any detail to zoom in.<br>• <b>Tap again</b> to zoom out.<br>• Use <b>Next/Prev</b> for more photos.</p>
+            <button class="btn-start" onclick="closePopup()">Start Viewing</button>
+        </div>
+    </div>
+
+    <div id="viewer">
+        <img id="displayImg" src="photo1.jpg" onclick="smartZoom(event)">
+        
+        <div class="controls">
+            <button class="nav-btn" onclick="prevImg()">❮ Previous</button>
+            <button class="nav-btn" onclick="nextImg()">Next ❯</button>
+        </div>
+    </div>
+
+    <script>
+        const imageList = ["photo1.jpg", "photo2.jpg"];
+        let currentIndex = 0;
+        let zoomed = false;
+
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+        }
+
+        function nextImg() {
+            currentIndex = (currentIndex + 1) % imageList.length;
+            updateImage();
+        }
+
+        function prevImg() {
+            currentIndex = (currentIndex - 1 + imageList.length) % imageList.length;
+            updateImage();
+        }
+
+        function updateImage() {
+            const img = document.getElementById('displayImg');
+            zoomed = false;
+            img.style.transform = "scale(1)";
+            img.src = imageList[currentIndex];
+        }
+
+        function smartZoom(e) {
+            const img = e.target;
+            if (zoomed) {
+                img.style.transform = "scale(1)";
+                img.style.cursor = "zoom-in";
+            } else {
+                const rect = img.getBoundingClientRect();
+                const offsetX = e.clientX - rect.left;
+                const offsetY = e.clientY - rect.top;
+                const xPercent = (offsetX / rect.width) * 100;
+                const yPercent = (offsetY / rect.height) * 100;
+
+                img.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+                img.style.transform = "scale(3.5)"; 
+                img.style.cursor = "zoom-out";
+            }
+            zoomed = !zoomed;
+        }
+    </script>
+</body>
+</html>
