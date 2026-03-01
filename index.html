@@ -1,65 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Gallery</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gallery</title>
 
     <style>
-        /* Fast Loading CSS */
-        body { margin: 0; background: #000; color: white; font-family: sans-serif; text-align: center; }
+        /* Speed & Layout */
+        body { margin: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
-        .counter { margin-top: 15px; font-size: 14px; color: #888; }
+        /* Gallery Container: Disables Native Pinch to allow Custom Tap-Zoom */
+        #gallery-container { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; touch-action: none; }
         
-        #img-box { width: 100%; height: 70vh; display: flex; align-items: center; justify-content: center; }
-        img { max-width: 100%; max-height: 100%; display: block; }
+        /* Tap to Zoom Animation */
+        img { max-width: 100%; max-height: 100%; transition: transform 0.3s ease; transform-origin: center; display: block; }
+        .zoomed { transform: scale(3.5) !important; }
 
-        /* Buttons moved UP for mobile ease of use */
-        .controls { margin-top: 20px; padding-bottom: 60px; display: flex; justify-content: center; gap: 20px; }
-        button { padding: 15px 30px; background: #333; color: white; border: 1px solid #555; border-radius: 8px; font-size: 16px; font-weight: bold; }
-        button:active { background: #555; }
+        /* Custom Popup: Professional & Simple */
+        #custom-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .popup-box { background: #1a1a1a; padding: 30px; border-radius: 12px; text-align: center; border: 1px solid #444; width: 85%; max-width: 320px; }
+        .popup-box h3 { margin: 0 0 15px 0; font-size: 22px; color: #fff; }
+        .popup-box p { margin: 10px 0; font-size: 16px; color: #ccc; line-height: 1.4; }
+        .btn-start { margin-top: 25px; padding: 12px 40px; background: #fff; color: #000; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+
+        /* Navigation: High-Positioned for Mobile */
+        .nav-bar { padding: 40px 0 80px 0; display: flex; justify-content: center; gap: 40px; background: #000; }
+        .nav-btn { background: #222; color: white; border: 1px solid #555; padding: 18px 35px; border-radius: 12px; font-size: 15px; font-weight: bold; -webkit-tap-highlight-color: transparent; }
+        .nav-btn:active { background: #444; }
     </style>
 </head>
 <body>
 
-    <div class="counter"><span id="idx">1</span> / 2</div>
-
-    <div id="img-box">
-        <img id="main-photo" src="photo1.jpg">
+    <div id="custom-popup">
+        <div class="popup-box">
+            <h3>Instructions</h3>
+            <p>Tap to zoom in/out</p>
+            <p>Click next/prev for more photos</p>
+            <button class="btn-start" onclick="closePopup()">OK</button>
+        </div>
     </div>
 
-    <div class="controls">
-        <button onclick="change(-1)">PREV</button>
-        <button onclick="change(1)">NEXT</button>
+    <div id="gallery-container" onclick="handleTap(event)">
+        <img id="main-photo" src="photo1.jpeg" alt="Photo">
+    </div>
+
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="change(-1)">PREV</button>
+        <button class="nav-btn" onclick="change(1)">NEXT</button>
     </div>
 
     <script>
-        // Use your 2 photo names here
-        const photos = ["photo1.jpg", "photo2.jpg"];
-        let current = 0;
+        // UPDATED: Using .jpeg as per your request
+        const images = ["photo1.jpeg", "photo2.jpeg"];
+        let currentIdx = 0;
+        let isZoomed = false;
+        const mainImg = document.getElementById('main-photo');
 
-        // THE POPUP (Exactly as you liked the first time)
-        // Wrapped in timeout to ensure it triggers on all mobile browsers
-        setTimeout(function() {
-            alert("• Tap to zoom in/out\n• Click prev/next for more photos\n• Pinch to zoom for details");
-        }, 500);
+        function closePopup() {
+            document.getElementById('custom-popup').style.display = 'none';
+        }
 
-        function change(step) {
-            current += step;
-            
-            // Loop logic for 2 photos
-            if (current >= photos.length) current = 0;
-            if (current < 0) current = photos.length - 1;
-
-            // Update Image and Counter
-            document.getElementById("main-photo").src = photos[current];
-            document.getElementById("idx").innerText = current + 1;
-
-            // Send event to Clarity
-            if (window.clarity) {
-                window.clarity("event", "switched_photo", { "name": photos[current] });
+        // Tap-to-Zoom Logic: Zooms into specific tap coordinate
+        function handleTap(e) {
+            if (!isZoomed) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                
+                mainImg.style.transformOrigin = `${x}% ${y}%`;
+                mainImg.classList.add('zoomed');
+                isZoomed = true;
+            } else {
+                mainImg.classList.remove('zoomed');
+                isZoomed = false;
             }
         }
+
+        // Navigation (Switches between 2 photos)
+        function change(dir) {
+            mainImg.classList.remove('zoomed');
+            isZoomed = false;
+            
+            currentIdx += dir;
+            if (currentIdx < 0) currentIdx = images.length - 1;
+            if (currentIdx >= images.length) currentIdx = 0;
+            
+            mainImg.src = images[currentIdx];
+
+            // Send manual event to Clarity for the "Full Journey"
+            if (window.clarity) {
+                window.clarity("event", "photo_navigated", { "file": images[currentIdx] });
+            }
+        }
+
+        // Pre-load the second photo immediately for instant speed
+        window.addEventListener('load', () => {
+            const pre = new Image();
+            pre.src = "photo2.jpeg";
+        });
     </script>
 </body>
 </html>
